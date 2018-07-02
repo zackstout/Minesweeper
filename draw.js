@@ -1,10 +1,11 @@
 
 let width, height;
 const marginLeft = 30;
-const marginTop = 30;
+const marginTop = 60;
 let numberButtons;
 let buttons = [];
-
+const numBombs = 80;
+let clicked = [];
 
 function setup() {
   width = 600;
@@ -13,14 +14,49 @@ function setup() {
 
   createCanvas(width, height);
   drawGrid();
-  prepareBombs(20);
+  prepareBombs(numBombs);
   displayReality();
+}
+
+// We could probably just store "clicked" as a boolean on each button....
+// function includesObj(arr, obj) {
+//   for (let i=0; i < arr.length; i++) {
+//     let el = arr[i];
+//     if (el.x == obj.x && el.y == obj.y) return true;
+//   }
+//   return false;
+// }
+
+
+// Yes, the recursion works!
+function turnNeighborsRed(el) {
+  el.style('background-color', 'red');
+
+  if (!el.clicked) {
+    let neighbors = getNeighbors(el.x, el.y);
+    neighbors.forEach(neighbor => {
+      neighbor.style('background-color', 'red');
+
+      if (neighbor.res == 0) {
+        el.clicked = true; // Yes this had to happen before the recursive call:
+        turnNeighborsRed(neighbor);
+      }
+    });
+  }
+
+
 }
 
 
 function handleButton() {
-  let neighbors = getNeighbors(this.x, this.y);
-  console.log(neighbors);
+  // let neighbors = getNeighbors(this.x, this.y);
+  console.log(this);
+  // // remove(this);
+  // turnRed(this);
+  // neighbors.forEach(neighbor => {
+  //   console.log('hi');
+  // });
+  turnNeighborsRed(this);
 }
 
 
@@ -50,24 +86,28 @@ function drawGrid() {
 // i is the x-coordinate, j the y-coordinate of the button:
 function getNeighbors(i, j) {
   let neighbors = [];
-  // This won't work: we need the BUTTON at the point, which is where the data is stored.
 
   const top = getButtonAt(i - 1, j);
   const bottom = getButtonAt(i + 1, j);
   const left = getButtonAt(i, j - 1);
   const right = getButtonAt(i, j + 1);
-  // if (i > 0) neighbors.push({x: i - 1, y: j}); // top
-  // if (j > 0) neighbors.push({x: i, y: j - 1}); // left
-  // if (i < numberButtons - 1) neighbors.push({x: i + 1, y: j}); // bottom
-  // if (j < numberButtons - 1) neighbors.push({x: i , y: j + 1}); // right
+  const top_right = getButtonAt(i - 1, j + 1);
+  const top_left = getButtonAt(i - 1, j - 1);
+  const bottom_right = getButtonAt(i + 1, j + 1);
+  const bottom_left = getButtonAt(i + 1, j - 1);
 
   if (i > 0) neighbors.push(top);
   if (j > 0) neighbors.push(left);
   if (i < numberButtons - 1) neighbors.push(bottom);
   if (j < numberButtons - 1) neighbors.push(right);
+  if (i > 0 && j > 0) neighbors.push(top_left);
+  if (i > 0 && j < numberButtons - 1) neighbors.push(top_right);
+  if (i < numberButtons - 1 && j > 0) neighbors.push(bottom_left);
+  if (i < numberButtons - 1 && j < numberButtons - 1) neighbors.push(bottom_right);
 
   return neighbors;
 }
+
 
 // throw caution to the winds:
 function getButtonAt(i, j) {
@@ -134,7 +174,18 @@ function displayReality() {
       }
     });
 
+    // store value on button -- only needs to be done once though:
+    btn.res = res;
+    btn.clicked = false; // initialize this
+
+    textAlign(CENTER, CENTER);
     let p = createP(res);
-    p.position(marginLeft + btn.x * numberButtons * 3/4, marginTop + btn.y * numberButtons * 3/4);
+    if (btn.bomb) {
+      p.style('color', 'green');
+    } else {
+      p.style('color', 'black');
+    }
+
+    p.position(marginLeft + btn.x * numberButtons * 3/4, marginTop + (btn.y - 1) * numberButtons * 3/4);
   });
 }
