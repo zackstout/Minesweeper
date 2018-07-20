@@ -7,9 +7,12 @@ const height = 600;
 const numBombs = 80;
 
 let cells = [];
-
 let opened_cells = [];
 
+
+
+// ===============================================================================================
+                                     // STARTERS:
 // ===============================================================================================
 
 function setup() {
@@ -26,80 +29,6 @@ function setup() {
 
   // Draw each cell's number:
   // displayReality(cells);
-}
-
-// ===============================================================================================
-
-// Yes, the recursion works!
-function turnNeighborsRed(el) {
-  if (!el.bomb) {
-    el.col = 'pink';
-    opened_cells.push(el);
-    if (!el.clicked) {
-      let neighbors = getNeighbors(el.x, el.y);
-      neighbors.forEach(neighbor => {
-        if (!neighbor.bomb && el.numAdjBombs == 0) {
-          neighbor.col = 'pink';
-          opened_cells.push(neighbor);
-        }
-
-        if (neighbor.numAdjBombs == 0) {
-          el.clicked = true; // Yes this has to happen before the recursive call
-          turnNeighborsRed(neighbor);
-        }
-      });
-    }
-  }
-}
-
-// ===============================================================================================
-
-function mousePressed() {
-  const clickedCell = getCellFromPixels(mouseX, mouseY);
-  clickedCell.col = 'blue';
-  drawGrid();
-
-
-  // Get where we are in relation to the Canvas. (can hopefully use marginTop and marginLeft)
-  // Find which cell was clicked. getCellFromPixels.
-  // If a bomb, lose game.
-  // If not, turnNeighborsRed.
-  // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
-}
-
-function mouseDragged() {
-  const clickedCell = getCellFromPixels(mouseX, mouseY);
-  cells.forEach(cell => cell.col = 'gray');
-
-  clickedCell.col = 'blue';
-  drawGrid();
-}
-
-// ===============================================================================================
-
-function mouseReleased() {
-  // cells.forEach(cell => cell.col = 'gray');
-  const clickedCell = getCellFromPixels(mouseX, mouseY);
-  // clickedCell.col = 'blue';
-  // drawGrid();
-
-  if (clickedCell.bomb) {
-    console.log('you lose, sucker!');
-  } else {
-    console.log(clickedCell);
-    turnNeighborsRed(clickedCell);
-    drawGrid();
-    displayReality(opened_cells);
-  }
-}
-
-// ===============================================================================================
-
-function getCellFromPixels(x, y) {
-  const i = Math.floor(x / cells[0].width);
-  const j = Math.floor(y / cells[0].height);
-  // console.log(i, j);
-  return getCellAt(i, j);
 }
 
 // ===============================================================================================
@@ -127,54 +56,7 @@ function initializeGrid() {
 
 // ===============================================================================================
 
-function drawGrid() {
-  cells.forEach(cell => {
-    fill(cell.col);
-    rect(cell.x * cell.width, cell.y * cell.height, cell.width, cell.height);
-  });
-}
-
-// ===============================================================================================
-
-// i is the x-coordinate, j the y-coordinate of the cell:
-function getNeighbors(i, j) {
-  let neighbors = [];
-
-  const top = getCellAt(i - 1, j);
-  const bottom = getCellAt(i + 1, j);
-  const left = getCellAt(i, j - 1);
-  const right = getCellAt(i, j + 1);
-  const top_right = getCellAt(i - 1, j + 1);
-  const top_left = getCellAt(i - 1, j - 1);
-  const bottom_right = getCellAt(i + 1, j + 1);
-  const bottom_left = getCellAt(i + 1, j - 1);
-
-  if (i > 0)                                neighbors.push(top);
-  if (j > 0)                                neighbors.push(left);
-  if (i < numCells - 1)                     neighbors.push(bottom);
-  if (j < numCells - 1)                     neighbors.push(right);
-  if (i > 0 && j > 0)                       neighbors.push(top_left);
-  if (i > 0 && j < numCells - 1)            neighbors.push(top_right);
-  if (i < numCells - 1 && j > 0)            neighbors.push(bottom_left);
-  if (i < numCells - 1 && j < numCells - 1) neighbors.push(bottom_right);
-
-  return neighbors;
-}
-
-// ===============================================================================================
-
-function getCellAt(i, j) {
-  // Yeah, foreach just can't handle returns....Weird:
-  for (let k=0; k < cells.length; k++) {
-    if (cells[k].x == i && cells[k].y == j) return cells[k];
-  }
-
-  return null; // I bet if we do this, wouldn't need if statements in getNeighbors...
-}
-
-// ===============================================================================================
-
-// n is the number of bombs to be added to the global array BUTTONS:
+// n is the number of bombs to be added to the global array CELLS:
 function prepareBombs(n) {
   let count = n;
   let randomIndices = [];
@@ -209,6 +91,118 @@ function addBombs(arr) {
 
 }
 
+
+
+// ===============================================================================================
+                                    // UI FUNCTIONS:
+// ===============================================================================================
+
+function mousePressed() {
+  const clickedCell = getCellFromPixels(mouseX, mouseY);
+  clickedCell.col = 'blue';
+  drawGrid();
+  // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
+}
+
+// ===============================================================================================
+
+function mouseDragged() {
+  const clickedCell = getCellFromPixels(mouseX, mouseY);
+  cells.forEach(cell => cell.col = 'gray');
+  clickedCell.col = 'blue';
+  drawGrid();
+}
+
+// ===============================================================================================
+
+function mouseReleased() {
+  const clickedCell = getCellFromPixels(mouseX, mouseY);
+
+  if (clickedCell.bomb) {
+    console.log('you lose, sucker!');
+  } else {
+    console.log(clickedCell);
+    turnNeighborsRed(clickedCell);
+    drawGrid();
+    displayReality(opened_cells);
+  }
+}
+
+
+
+// ===============================================================================================
+                                        // HELPERS:
+// ===============================================================================================
+
+function getCellFromPixels(x, y) {
+  const i = Math.floor(x / cells[0].width);
+  const j = Math.floor(y / cells[0].height);
+  // console.log(i, j);
+  return getCellAt(i, j);
+}
+
+// ===============================================================================================
+
+// Yes, the recursion works!
+function turnNeighborsRed(el) {
+  if (!el.bomb) {
+    el.col = 'pink';
+    opened_cells.push(el);
+    if (!el.clicked) {
+      let neighbors = getNeighbors(el.x, el.y);
+      neighbors.forEach(neighbor => {
+        if (!neighbor.bomb && el.numAdjBombs == 0) {
+          neighbor.col = 'pink';
+          opened_cells.push(neighbor);
+        }
+
+        if (neighbor.numAdjBombs == 0) {
+          el.clicked = true; // Yes this has to happen before the recursive call
+          turnNeighborsRed(neighbor);
+        }
+      });
+    }
+  }
+}
+
+// ===============================================================================================
+
+function getCellAt(i, j) {
+  // Yeah, foreach just can't handle returns....Weird:
+  for (let k=0; k < cells.length; k++) {
+    if (cells[k].x == i && cells[k].y == j) return cells[k];
+  }
+
+  return null; // I bet if we do this, wouldn't need if statements in getNeighbors...
+}
+
+// ===============================================================================================
+
+// i is the x-coordinate, j the y-coordinate of the cell:
+function getNeighbors(i, j) {
+  let neighbors = [];
+
+  const top = getCellAt(i - 1, j);
+  const bottom = getCellAt(i + 1, j);
+  const left = getCellAt(i, j - 1);
+  const right = getCellAt(i, j + 1);
+  const top_right = getCellAt(i - 1, j + 1);
+  const top_left = getCellAt(i - 1, j - 1);
+  const bottom_right = getCellAt(i + 1, j + 1);
+  const bottom_left = getCellAt(i + 1, j - 1);
+
+  if (i > 0)                                neighbors.push(top);
+  if (j > 0)                                neighbors.push(left);
+  if (i < numCells - 1)                     neighbors.push(bottom);
+  if (j < numCells - 1)                     neighbors.push(right);
+  if (i > 0 && j > 0)                       neighbors.push(top_left);
+  if (i > 0 && j < numCells - 1)            neighbors.push(top_right);
+  if (i < numCells - 1 && j > 0)            neighbors.push(bottom_left);
+  if (i < numCells - 1 && j < numCells - 1) neighbors.push(bottom_right);
+
+  return neighbors;
+}
+
 // ===============================================================================================
 
 function getNumBombs(cell) {
@@ -221,10 +215,22 @@ function getNumBombs(cell) {
   return res;
 }
 
+
+
+// ===============================================================================================
+                                        // DRAWING:
+// ===============================================================================================
+
+function drawGrid() {
+  cells.forEach(cell => {
+    fill(cell.col);
+    rect(cell.x * cell.width, cell.y * cell.height, cell.width, cell.height);
+  });
+}
+
 // ===============================================================================================
 
 function drawNumBombs(cell) {
-  // const p = cell.bomb ? createP('b') : createP(cell.numAdjBombs);
   let p;
   if (cell.bomb) {
     p = createP('b');
