@@ -27,17 +27,20 @@ function setup() {
 function turnNeighborsRed(el) {
   if (!el.bomb) {
     // el.style('background-color', 'red');
-    el.remove();
+    // el.remove();
+    el.col = 'pink';
 
     if (!el.clicked) {
       let neighbors = getNeighbors(el.x, el.y);
       neighbors.forEach(neighbor => {
-        if (!neighbor.bomb && el.res == 0) {
+        if (!neighbor.bomb && el.numAdjBombs == 0) {
           // neighbor.style('background-color', 'red');
-          neighbor.remove();
+          // neighbor.remove();
+          console.log('aha');
+          neighbor.col = 'pink';
         }
 
-        if (neighbor.res == 0) {
+        if (neighbor.numAdjBombs == 0) {
           el.clicked = true; // Yes this has to happen before the recursive call:
           turnNeighborsRed(neighbor);
         }
@@ -58,6 +61,7 @@ function mousePressed() {
   } else {
     console.log(clickedCell);
     turnNeighborsRed(clickedCell);
+    drawGrid();
   }
   // Get where we are in relation to the Canvas. (can hopefully use marginTop and marginLeft)
   // Find which cell was clicked. getCellFromPixels.
@@ -68,10 +72,10 @@ function mousePressed() {
 
 // ===============================================================================================
 
-function mouseReleased() {
-  cells.forEach(cell => cell.col = 'gray');
-  drawGrid();
-}
+// function mouseReleased() {
+//   cells.forEach(cell => cell.col = 'gray');
+//   drawGrid();
+// }
 
 // ===============================================================================================
 
