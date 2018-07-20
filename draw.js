@@ -8,6 +8,8 @@ const numBombs = 80;
 
 let cells = [];
 
+let opened_cells = [];
+
 // ===============================================================================================
 
 function setup() {
@@ -23,7 +25,7 @@ function setup() {
   });
 
   // Draw each cell's number:
-  displayReality(cells);
+  // displayReality(cells);
 }
 
 // ===============================================================================================
@@ -32,12 +34,13 @@ function setup() {
 function turnNeighborsRed(el) {
   if (!el.bomb) {
     el.col = 'pink';
-
+    opened_cells.push(el);
     if (!el.clicked) {
       let neighbors = getNeighbors(el.x, el.y);
       neighbors.forEach(neighbor => {
         if (!neighbor.bomb && el.numAdjBombs == 0) {
           neighbor.col = 'pink';
+          opened_cells.push(neighbor);
         }
 
         if (neighbor.numAdjBombs == 0) {
@@ -52,7 +55,30 @@ function turnNeighborsRed(el) {
 // ===============================================================================================
 
 function mousePressed() {
+  const clickedCell = getCellFromPixels(mouseX, mouseY);
+  clickedCell.col = 'blue';
+  drawGrid();
 
+
+  // Get where we are in relation to the Canvas. (can hopefully use marginTop and marginLeft)
+  // Find which cell was clicked. getCellFromPixels.
+  // If a bomb, lose game.
+  // If not, turnNeighborsRed.
+  // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
+}
+
+function mouseDragged() {
+  const clickedCell = getCellFromPixels(mouseX, mouseY);
+  cells.forEach(cell => cell.col = 'gray');
+
+  clickedCell.col = 'blue';
+  drawGrid();
+}
+
+// ===============================================================================================
+
+function mouseReleased() {
+  // cells.forEach(cell => cell.col = 'gray');
   const clickedCell = getCellFromPixels(mouseX, mouseY);
   // clickedCell.col = 'blue';
   // drawGrid();
@@ -63,20 +89,9 @@ function mousePressed() {
     console.log(clickedCell);
     turnNeighborsRed(clickedCell);
     drawGrid();
+    displayReality(opened_cells);
   }
-  // Get where we are in relation to the Canvas. (can hopefully use marginTop and marginLeft)
-  // Find which cell was clicked. getCellFromPixels.
-  // If a bomb, lose game.
-  // If not, turnNeighborsRed.
-  // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
 }
-
-// ===============================================================================================
-
-// function mouseReleased() {
-//   cells.forEach(cell => cell.col = 'gray');
-//   drawGrid();
-// }
 
 // ===============================================================================================
 
