@@ -17,10 +17,13 @@ function setup() {
   drawGrid();
   prepareBombs(numBombs);
 
-  // cells.getNumBombs = cells.map(c => getNumBombs(c));
+  // Initialize each cell's number:
+  cells.forEach(cell => {
+    cell.numAdjBombs = getNumBombs(cell);
+  });
 
-  displayReality();
-
+  // Draw each cell's number:
+  displayReality(cells);
 }
 
 // ===============================================================================================
@@ -28,27 +31,18 @@ function setup() {
 // Yes, the recursion works!
 function turnNeighborsRed(el) {
   if (!el.bomb) {
-    // el.style('background-color', 'red');
-    // el.remove();
     el.col = 'pink';
 
     if (!el.clicked) {
       let neighbors = getNeighbors(el.x, el.y);
       neighbors.forEach(neighbor => {
-        // console.log(neighbor);
-        if (!neighbor.bomb && el.numAdjBombs == 0 && false) {
-          // neighbor.style('background-color', 'red');
-          // neighbor.remove();
-          // console.log('aha'); // This gets logged like 2000 times -- why???
+        if (!neighbor.bomb && el.numAdjBombs == 0) {
           neighbor.col = 'pink';
         }
 
         if (neighbor.numAdjBombs == 0) {
           el.clicked = true; // Yes this has to happen before the recursive call
-          // console.log('ay');
-          // drawGrid();
           turnNeighborsRed(neighbor);
-
         }
       });
     }
@@ -209,14 +203,13 @@ function getNumBombs(cell) {
       res ++;
     }
   });
-  cell.numAdjBombs = res; // This is so awkward -- we should not be making this initialization dependent on displayReality, but oh well.
   return res;
 }
 
 // ===============================================================================================
 
 function drawNumBombs(cell) {
-  const p = cell.bomb ? createP('b') : createP(getNumBombs(cell));
+  const p = cell.bomb ? createP('b') : createP(cell.numAdjBombs);
   if (cell.bomb) {
     p.style('color', 'green');
   } else {
@@ -228,7 +221,7 @@ function drawNumBombs(cell) {
 
 // ===============================================================================================
 
-function displayReality() {
+function displayReality(cells) {
   cells.forEach(cell => {
     drawNumBombs(cell);
   });
