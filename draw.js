@@ -98,7 +98,7 @@ function mouseReleased() {
 function getCellFromPixels(x, y) {
   const i = Math.floor(x / cells[0].width);
   const j = Math.floor(y / cells[0].height);
-  console.log(i, j);
+  // console.log(i, j);
   return getCellAt(i, j);
 }
 
@@ -224,7 +224,16 @@ function getNumBombs(cell) {
 // ===============================================================================================
 
 function drawNumBombs(cell) {
-  const p = cell.bomb ? createP('b') : createP(cell.numAdjBombs);
+  // const p = cell.bomb ? createP('b') : createP(cell.numAdjBombs);
+  let p;
+  if (cell.bomb) {
+    p = createP('b');
+  }
+  else {
+    if (cell.numAdjBombs == 0) p = createP(' ');
+    else p = createP(cell.numAdjBombs);
+  }
+
   if (cell.bomb) {
     p.style('color', 'green');
   } else {
