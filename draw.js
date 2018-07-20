@@ -1,130 +1,158 @@
 
-let width, height;
-const marginLeft = 30;
+const marginLeft = 60;
 const marginTop = 60;
-let numberButtons;
-let buttons = [];
+const numCells = 25; // Makes a 25x25 grid.
+const width = 600;
+const height = 600;
 const numBombs = 80;
-let clicked = [];
+
+let cells = [];
+
+// ===============================================================================================
 
 function setup() {
-  width = 600;
-  height = 600;
-  numberButtons = 25;
-
-  createCanvas(width, height);
+  const canv = createCanvas(width, height);
+  canv.position(marginLeft, marginTop);
+  initializeGrid();
   drawGrid();
   prepareBombs(numBombs);
   displayReality();
+
+  cells.getNumBombs = cells.map(c => getNumBombs(c));
 }
 
-// We could probably just store "clicked" as a boolean on each button....
-// function includesObj(arr, obj) {
-//   for (let i=0; i < arr.length; i++) {
-//     let el = arr[i];
-//     if (el.x == obj.x && el.y == obj.y) return true;
-//   }
-//   return false;
-// }
-
+// ===============================================================================================
 
 // Yes, the recursion works!
 function turnNeighborsRed(el) {
-  el.style('background-color', 'red');
+  if (!el.bomb) {
+    // el.style('background-color', 'red');
+    el.remove();
 
-  if (!el.clicked) {
-    let neighbors = getNeighbors(el.x, el.y);
-    neighbors.forEach(neighbor => {
-      neighbor.style('background-color', 'red');
+    if (!el.clicked) {
+      let neighbors = getNeighbors(el.x, el.y);
+      neighbors.forEach(neighbor => {
+        if (!neighbor.bomb && el.res == 0) {
+          // neighbor.style('background-color', 'red');
+          neighbor.remove();
+        }
 
-      if (neighbor.res == 0) {
-        el.clicked = true; // Yes this had to happen before the recursive call:
-        turnNeighborsRed(neighbor);
-      }
-    });
-  }
-
-
-}
-
-
-function handleButton() {
-  // let neighbors = getNeighbors(this.x, this.y);
-  console.log(this);
-  // // remove(this);
-  // turnRed(this);
-  // neighbors.forEach(neighbor => {
-  //   console.log('hi');
-  // });
-  turnNeighborsRed(this);
-}
-
-
-function drawGrid() {
-  for (let i=0; i < numberButtons; i++) {
-    for (let j=0; j < numberButtons; j++) {
-      let button = createButton(' ');
-      button.position(marginLeft + i * numberButtons * 3/4, marginTop + j * numberButtons * 3/4);
-      button.x = i;
-      button.y = j;
-
-      // Alternative notation:
-      button.location = {
-        x: i,
-        y: j
-      };
-
-      button.bomb = false;
-
-      button.mousePressed(handleButton);
-      buttons.push(button); // methinks we need a global array
+        if (neighbor.res == 0) {
+          el.clicked = true; // Yes this has to happen before the recursive call:
+          turnNeighborsRed(neighbor);
+        }
+      });
     }
   }
 }
 
+// ===============================================================================================
 
-// i is the x-coordinate, j the y-coordinate of the button:
+function mousePressed() {
+  console.log(mouseX, mouseY);
+  const clickedCell = getCellFromPixels(mouseX, mouseY);
+  clickedCell.col = 'blue';
+  drawGrid();
+  if (clickedCell.bomb) {
+    console.log('you lose, sucker!');
+  } else {
+    console.log(clickedCell);
+    turnNeighborsRed(clickedCell);
+  }
+  // Get where we are in relation to the Canvas. (can hopefully use marginTop and marginLeft)
+  // Find which cell was clicked. getCellFromPixels.
+  // If a bomb, lose game.
+  // If not, turnNeighborsRed.
+  // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
+}
+
+// ===============================================================================================
+
+function mouseReleased() {
+  cells.forEach(cell => cell.col = 'gray');
+  drawGrid();
+}
+
+// ===============================================================================================
+
+function getCellFromPixels(x, y) {
+  const i = Math.floor(x / cells[0].width);
+  const j = Math.floor(y / cells[0].height);
+  console.log(i, j);
+  return getCellAt(i, j);
+}
+
+// ===============================================================================================
+
+function initializeGrid() {
+  for (let i=0; i < numCells; i++) {
+    for (let j=0; j < numCells; j++) {
+      let cell = {
+        x: i,
+        y: j,
+        col: 'gray',
+        height: height / numCells,
+        width: width / numCells,
+        bomb: false,
+        clicked: false,
+        flagged: false,
+        questioned: false,
+        numAdjBombs: 0
+      };
+
+      cells.push(cell);
+    }
+  }
+}
+
+// ===============================================================================================
+
+function drawGrid() {
+  cells.forEach(cell => {
+    fill(cell.col);
+    rect(cell.x * cell.width, cell.y * cell.height, cell.width, cell.height);
+  });
+}
+
+// ===============================================================================================
+
+// i is the x-coordinate, j the y-coordinate of the cell:
 function getNeighbors(i, j) {
   let neighbors = [];
 
-  const top = getButtonAt(i - 1, j);
-  const bottom = getButtonAt(i + 1, j);
-  const left = getButtonAt(i, j - 1);
-  const right = getButtonAt(i, j + 1);
-  const top_right = getButtonAt(i - 1, j + 1);
-  const top_left = getButtonAt(i - 1, j - 1);
-  const bottom_right = getButtonAt(i + 1, j + 1);
-  const bottom_left = getButtonAt(i + 1, j - 1);
+  const top = getCellAt(i - 1, j);
+  const bottom = getCellAt(i + 1, j);
+  const left = getCellAt(i, j - 1);
+  const right = getCellAt(i, j + 1);
+  const top_right = getCellAt(i - 1, j + 1);
+  const top_left = getCellAt(i - 1, j - 1);
+  const bottom_right = getCellAt(i + 1, j + 1);
+  const bottom_left = getCellAt(i + 1, j - 1);
 
-  if (i > 0) neighbors.push(top);
-  if (j > 0) neighbors.push(left);
-  if (i < numberButtons - 1) neighbors.push(bottom);
-  if (j < numberButtons - 1) neighbors.push(right);
-  if (i > 0 && j > 0) neighbors.push(top_left);
-  if (i > 0 && j < numberButtons - 1) neighbors.push(top_right);
-  if (i < numberButtons - 1 && j > 0) neighbors.push(bottom_left);
-  if (i < numberButtons - 1 && j < numberButtons - 1) neighbors.push(bottom_right);
+  if (i > 0)                                neighbors.push(top);
+  if (j > 0)                                neighbors.push(left);
+  if (i < numCells - 1)                     neighbors.push(bottom);
+  if (j < numCells - 1)                     neighbors.push(right);
+  if (i > 0 && j > 0)                       neighbors.push(top_left);
+  if (i > 0 && j < numCells - 1)            neighbors.push(top_right);
+  if (i < numCells - 1 && j > 0)            neighbors.push(bottom_left);
+  if (i < numCells - 1 && j < numCells - 1) neighbors.push(bottom_right);
 
   return neighbors;
 }
 
+// ===============================================================================================
 
-// throw caution to the winds:
-function getButtonAt(i, j) {
-  // buttons.forEach(btn => {
-  //   if (btn.x == i && btn.y == j) return btn;
-  //   else return 'what';
-  // });
-
+function getCellAt(i, j) {
   // Yeah, foreach just can't handle returns....Weird:
-  for (let k=0; k < buttons.length; k++) {
-    const btn = buttons[k];
-    if (btn.x == i && btn.y == j) {
-      return btn;
-    }
+  for (let k=0; k < cells.length; k++) {
+    if (cells[k].x == i && cells[k].y == j) return cells[k];
   }
+
+  return null; // I bet if we do this, wouldn't need if statements in getNeighbors...
 }
 
+// ===============================================================================================
 
 // n is the number of bombs to be added to the global array BUTTONS:
 function prepareBombs(n) {
@@ -133,7 +161,7 @@ function prepareBombs(n) {
 
   // Generate random indices (ensuring no duplicates):
   while (count > 0) {
-    let index = Math.floor(Math.random() * numberButtons * numberButtons);
+    const index = Math.floor(Math.random() * numCells * numCells);
     if (!randomIndices.includes(index)) {
       randomIndices.push(index);
       count --;
@@ -143,49 +171,53 @@ function prepareBombs(n) {
   addBombs(randomIndices);
 }
 
+// ===============================================================================================
 
 // For each index, find where it lives in the buttons array:
 function addBombs(arr) {
   arr.forEach(ind => {
-    let x = Math.floor(ind / numberButtons);
-    let y = ind % numberButtons;
+    const x = Math.floor(ind / numCells);
+    const y = ind % numCells;
 
     // Loop through buttons array to add bombs to proper cells:
-    buttons.forEach(button => {
-      if (button.x == x && button.y == y) {
-        button.bomb = true;
+    cells.forEach(cell => {
+      if (cell.x == x && cell.y == y) {
+        cell.bomb = true;
       }
     });
   });
 
-  console.log(buttons.filter(function(x) {
-     return x.bomb;
-  }));
 }
 
+// ===============================================================================================
 
+function getNumBombs(cell) {
+  let res = 0;
+  getNeighbors(cell.x, cell.y).forEach(neighbor => {
+    if (neighbor.bomb) {
+      res ++;
+    }
+  });
+  return res;
+}
+
+// ===============================================================================================
+
+function drawNumBombs(cell) {
+  const p = cell.bomb ? createP('b') : createP(getNumBombs(cell));
+  if (cell.bomb) {
+    p.style('color', 'green');
+  } else {
+    p.style('color', 'black');
+  }
+  // Yeah, weird and finicky way to get it centered:
+  p.position(cell.x * cell.width + marginLeft + cell.width / 2 - 2, cell.y * cell.height + marginTop - cell.height / 2);
+}
+
+// ===============================================================================================
 
 function displayReality() {
-  buttons.forEach(btn => {
-    let res = 0;
-    getNeighbors(btn.x, btn.y).forEach(neighbor => {
-      if (neighbor.bomb) {
-        res ++;
-      }
-    });
-
-    // store value on button -- only needs to be done once though:
-    btn.res = res;
-    btn.clicked = false; // initialize this
-
-    textAlign(CENTER, CENTER);
-    let p = createP(res);
-    if (btn.bomb) {
-      p.style('color', 'green');
-    } else {
-      p.style('color', 'black');
-    }
-
-    p.position(marginLeft + btn.x * numberButtons * 3/4, marginTop + (btn.y - 1) * numberButtons * 3/4);
+  cells.forEach(cell => {
+    drawNumBombs(cell);
   });
 }
