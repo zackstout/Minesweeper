@@ -16,9 +16,11 @@ function setup() {
   initializeGrid();
   drawGrid();
   prepareBombs(numBombs);
+
+  // cells.getNumBombs = cells.map(c => getNumBombs(c));
+
   displayReality();
 
-  cells.getNumBombs = cells.map(c => getNumBombs(c));
 }
 
 // ===============================================================================================
@@ -33,16 +35,20 @@ function turnNeighborsRed(el) {
     if (!el.clicked) {
       let neighbors = getNeighbors(el.x, el.y);
       neighbors.forEach(neighbor => {
-        if (!neighbor.bomb && el.numAdjBombs == 0) {
+        // console.log(neighbor);
+        if (!neighbor.bomb && el.numAdjBombs == 0 && false) {
           // neighbor.style('background-color', 'red');
           // neighbor.remove();
-          console.log('aha');
+          // console.log('aha'); // This gets logged like 2000 times -- why???
           neighbor.col = 'pink';
         }
 
         if (neighbor.numAdjBombs == 0) {
-          el.clicked = true; // Yes this has to happen before the recursive call:
+          el.clicked = true; // Yes this has to happen before the recursive call
+          // console.log('ay');
+          // drawGrid();
           turnNeighborsRed(neighbor);
+
         }
       });
     }
@@ -52,10 +58,11 @@ function turnNeighborsRed(el) {
 // ===============================================================================================
 
 function mousePressed() {
-  console.log(mouseX, mouseY);
+
   const clickedCell = getCellFromPixels(mouseX, mouseY);
-  clickedCell.col = 'blue';
-  drawGrid();
+  // clickedCell.col = 'blue';
+  // drawGrid();
+
   if (clickedCell.bomb) {
     console.log('you lose, sucker!');
   } else {
@@ -177,13 +184,13 @@ function prepareBombs(n) {
 
 // ===============================================================================================
 
-// For each index, find where it lives in the buttons array:
 function addBombs(arr) {
+  // For each index, find where it lives in the cells array:
   arr.forEach(ind => {
     const x = Math.floor(ind / numCells);
     const y = ind % numCells;
 
-    // Loop through buttons array to add bombs to proper cells:
+    // Loop through cells array to add bombs to proper cells:
     cells.forEach(cell => {
       if (cell.x == x && cell.y == y) {
         cell.bomb = true;
@@ -202,6 +209,7 @@ function getNumBombs(cell) {
       res ++;
     }
   });
+  cell.numAdjBombs = res; // This is so awkward -- we should not be making this initialization dependent on displayReality, but oh well.
   return res;
 }
 
