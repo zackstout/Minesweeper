@@ -13,7 +13,6 @@ let time = 0;
 let gameTimer;
 let flags = [];
 let questions = [];
-let ctx;
 
 // ===============================================================================================
 // STARTERS:
@@ -34,7 +33,6 @@ function setup() {
 
   const canv = createCanvas(width, height);
   canv.position(marginLeft, marginTop);
-  // ctx = canv.getContext('2d');
 
   initializeGrid();
   drawGrid();
@@ -124,11 +122,6 @@ function addBombs(arr) {
 // UI FUNCTIONS:
 // ===============================================================================================
 
-// function doubleClicked() {
-//   console.log('what up');
-// }
-
-
 function mousePressed() {
   const clickedCell = getCellFromPixels(mouseX, mouseY);
   cells.forEach(cell => {
@@ -216,14 +209,14 @@ function containsCell(arr, cell) {
 // Yes, the recursion works!
 function turnNeighborsRed(el) {
   if (!el.bomb) {
-    el.col = 'pink';
+    // el.col = 'pink';
     el.opened = true;
     opened_cells.push(el);
     if (!el.clicked) {
       let neighbors = getNeighbors(el.x, el.y);
       neighbors.forEach(neighbor => {
         if (!neighbor.bomb && el.numAdjBombs == 0) {
-          neighbor.col = 'pink';
+          // neighbor.col = 'pink';
           neighbor.opened = true;
           if (!containsCell(opened_cells, neighbor)) {
             opened_cells.push(neighbor);
@@ -299,7 +292,8 @@ function drawGrid() {
   cells.forEach(cell => {
     const BORDER = 1/10;
     fill(cell.col);
-    stroke(0);
+    stroke(100);
+
     const xPos = cell.x * cell.width;
     const yPos = cell.y * cell.height;
     rect(xPos, yPos, cell.width, cell.height);
@@ -345,6 +339,14 @@ function drawNumBombs(cell) {
     if (cell.numAdjBombs == 0) {
       text(' ', posX, posY);
     } else {
+      let col;
+      switch(cell.numAdjBombs) {
+        case 1: fill('blue'); break;
+        case 2: fill('green'); break;
+        case 3: fill('red'); break;
+        case 4: fill('purple'); break;
+        case 5: fill('darkblue'); break;
+      }
       text(cell.numAdjBombs, posX, posY);
     }
   }
