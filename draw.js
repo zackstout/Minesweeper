@@ -13,6 +13,7 @@ let time = 0;
 let gameTimer;
 let flags = [];
 let questions = [];
+let ctx;
 
 // ===============================================================================================
                                      // STARTERS:
@@ -33,6 +34,7 @@ function setup() {
 
   const canv = createCanvas(width, height);
   canv.position(marginLeft, marginTop);
+  // ctx = canv.getContext('2d');
 
   initializeGrid();
   drawGrid();
@@ -148,7 +150,7 @@ function mousePressed() {
   });
   clickedCell.hovered = true;
   drawGrid();
-
+  displayReality(opened_cells);
   // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
 }
 
@@ -161,6 +163,7 @@ function mouseDragged() {
   });
   clickedCell.hovered = true;
   drawGrid();
+  displayReality(opened_cells);
 }
 
 // ===============================================================================================
@@ -197,8 +200,9 @@ function mouseReleased() {
     }
 
   }
-  displayReality(opened_cells, flags, questions);
   drawGrid();
+
+  displayReality(opened_cells, flags, questions);
 }
 
 
@@ -339,29 +343,37 @@ function drawGrid() {
 // ===============================================================================================
 
 function drawNumBombs(cell) {
-  let p;
+  // what??? the math is so weird.
+  const posX = (cell.x - 2) * cell.width + marginLeft ;
+  const posY = (cell.y - 4) * cell.height + marginTop ;
+
+  fill('black');
   if (cell.bomb) {
-    p = createP('b');
-    p.style('color', 'green');
+    // p = createP('b');
+    // p.style('color', 'green');
+    text('b', posX, posY);
   }
   else {
     if (cell.numAdjBombs == 0) {
-      p = createP(' ');
+      // p = createP(' ');
+      text(' ', posX, posY);
     } else {
-      p = createP(cell.numAdjBombs);
+      // p = createP(cell.numAdjBombs);
+      text(cell.numAdjBombs, posX, posY);
     }
-    p.style('color', 'black');
+    // p.style('color', 'black');
   }
 
   // Yeah, weird and finicky way to get it centered:
-  p.position(cell.x * cell.width + marginLeft + cell.width / 2 - 2, cell.y * cell.height + marginTop - cell.height / 2);
+  // p.position(cell.x * cell.width + marginLeft + cell.width / 2 - 2, cell.y * cell.height + marginTop - cell.height / 2);
 }
 
 // ===============================================================================================
 
 function displayReality(cells, flags=[], questions=[]) {
+  console.log(ctx);
   cells.forEach(cell => {
-    // drawNumBombs(cell);
+    drawNumBombs(cell);
   });
   // flags.forEach(flag => {
   //   p = createP('f');
