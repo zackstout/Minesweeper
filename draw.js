@@ -70,6 +70,7 @@ function initializeGrid() {
         width: width / numCells,
         bomb: false,
         clicked: false,
+        opened: false,
         flagged: false,
         questioned: false,
         numAdjBombs: 0
@@ -216,12 +217,14 @@ function containsCell(arr, cell) {
 function turnNeighborsRed(el) {
   if (!el.bomb) {
     el.col = 'pink';
+    el.opened = true;
     opened_cells.push(el);
     if (!el.clicked) {
       let neighbors = getNeighbors(el.x, el.y);
       neighbors.forEach(neighbor => {
         if (!neighbor.bomb && el.numAdjBombs == 0) {
           neighbor.col = 'pink';
+          neighbor.opened = true;
           if (!containsCell(opened_cells, neighbor)) {
             opened_cells.push(neighbor);
           }
@@ -294,21 +297,30 @@ function getNumBombs(cell) {
 
 function drawGrid() {
   cells.forEach(cell => {
-    fill(cell.col);
-    if (cell.hovered) fill('blue');
     const BORDER = 1/10;
-
+    fill(cell.col);
+    stroke(0);
     const xPos = cell.x * cell.width;
     const yPos = cell.y * cell.height;
     rect(xPos, yPos, cell.width, cell.height);
 
-    noStroke();
-    fill('lightgray'); // strangely, darker than dark gray.
-    rect(xPos, yPos, cell.width * BORDER, cell.height);
-    rect(xPos, yPos, cell.width, cell.height * BORDER);
-    fill('gray');
-    rect(xPos + (1 - BORDER) * cell.width, yPos, cell.width * BORDER, cell.height);
-    rect(xPos, yPos + (1 - BORDER) * cell.height, cell.width, cell.height * BORDER);
+    if (!cell.opened) {
+      noStroke();
+      // Bottom border:
+      fill('gray'); // strangely, darker than dark gray.
+      rect(xPos + (1 - BORDER) * cell.width, yPos, cell.width * BORDER, cell.height);
+      rect(xPos, yPos + (1 - BORDER) * cell.height, cell.width, cell.height * BORDER);
+
+      // Top border:
+      if (cell.hovered) {
+        fill('dimgray');
+      } else {
+        fill('lightgray');
+      }
+      rect(xPos, yPos, cell.width * BORDER, cell.height);
+      rect(xPos, yPos, cell.width, cell.height * BORDER);
+    }
+
   });
 }
 
