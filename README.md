@@ -6,3 +6,5 @@ Building the classic game to practice designing algorithms and building user int
 
 
 - It's awkward because I want to use ES6 modules, but that requires a server, and that means no Github Pages hosting.
+
+- Once again I learn the lesson that creating a bunch of entities is really expensive.

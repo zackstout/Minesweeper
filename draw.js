@@ -16,7 +16,7 @@ let questions = [];
 let ctx;
 
 // ===============================================================================================
-                                     // STARTERS:
+// STARTERS:
 // ===============================================================================================
 
 function setup() {
@@ -64,7 +64,7 @@ function initializeGrid() {
       const cell = {
         x: i,
         y: j,
-        col: 'gray',
+        col: 'darkgray',
         hovered: false,
         height: height / numCells,
         width: width / numCells,
@@ -120,26 +120,11 @@ function addBombs(arr) {
 
 
 // ===============================================================================================
-                                    // UI FUNCTIONS:
+// UI FUNCTIONS:
 // ===============================================================================================
 
 // function doubleClicked() {
-//
-// }
-
-
-// function draw() {
-//   if (mouseIsPressed) {
-//     const clickedCell = getCellFromPixels(mouseX, mouseY);
-//
-//     // if (mouseButton === LEFT) {
-//     //   console.log('left');
-//     //   clickedCell.col = 'blue';
-//     // } else {
-//     //
-//     // }
-//     // drawGrid();
-//   }
+//   console.log('what up');
 // }
 
 
@@ -150,7 +135,7 @@ function mousePressed() {
   });
   clickedCell.hovered = true;
   drawGrid();
-  displayReality(opened_cells);
+  displayReality(opened_cells, flags, questions);
   // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
 }
 
@@ -163,7 +148,7 @@ function mouseDragged() {
   });
   clickedCell.hovered = true;
   drawGrid();
-  displayReality(opened_cells);
+  displayReality(opened_cells, flags, questions);
 }
 
 // ===============================================================================================
@@ -171,44 +156,35 @@ function mouseDragged() {
 function mouseReleased() {
   const clickedCell = getCellFromPixels(mouseX, mouseY);
   clickedCell.hovered = false;
-  //clickedCell.clicked = true; // does this matter? No -- it happens in the recursive call
 
   if (mouseButton === LEFT) {
     if (clickedCell.bomb) {
       console.log('you lose, sucker!');
       clearInterval(gameTimer);
     } else {
-      console.log(clickedCell);
       turnNeighborsRed(clickedCell);
-      // displayReality(opened_cells);
     }
   } else {
-    console.log('right');
 
-    if (!containsCell(flags, clickedCell) && !containsCell(questions, clickedCell)) {
-      // will this make the next condition trigger? One would hope not.
-      // clickedCell.flagged = true;
-      flags.push(clickedCell);
-    } else if (containsCell(flags, clickedCell)) {
-      // clickedCell.flagged = false;
-      // clickedCell.questioned = true;
-      findAndRemoveCell(flags, clickedCell);
-      questions.push(clickedCell);
-    } else if (containsCell(questions, clickedCell)) {
-      // clickedCell.questioned = false;
-      findAndRemoveCell(questions, clickedCell);
+    if (!containsCell(opened_cells, clickedCell)) {
+      if (!containsCell(flags, clickedCell) && !containsCell(questions, clickedCell)) {
+        flags.push(clickedCell);
+      } else if (containsCell(flags, clickedCell)) {
+        findAndRemoveCell(flags, clickedCell);
+        questions.push(clickedCell);
+      } else if (containsCell(questions, clickedCell)) {
+        findAndRemoveCell(questions, clickedCell);
+      }
     }
-
   }
   drawGrid();
-
   displayReality(opened_cells, flags, questions);
 }
 
 
 
 // ===============================================================================================
-                                        // HELPERS:
+// HELPERS:
 // ===============================================================================================
 
 function findAndRemoveCell(arr, cell) {
@@ -313,31 +289,33 @@ function getNumBombs(cell) {
 
 
 // ===============================================================================================
-                                        // DRAWING:
+// DRAWING:
 // ===============================================================================================
 
 function drawGrid() {
   cells.forEach(cell => {
     fill(cell.col);
     if (cell.hovered) fill('blue');
-    rect(cell.x * cell.width, cell.y * cell.height, cell.width, cell.height);
+    const BORDER = 1/10;
 
-    // Adding this makes it intolerably slow. So the problem must be that drawGrid is being called too much:
-    // let p;
-    // if (cell.flagged) {
-    //   p = createP('f');
-    // }
-    // else if (cell.questioned) {
-    //   p = createP('?');
-    // }
-    // else {
-    //   // p.remove();
-    //   p = createP(' ');
-    // }
-    // // } p = createP('');
-    //
-    // p.position(cell.x * cell.width + marginLeft + cell.width/2 - 2, cell.y * cell.height + marginTop - cell.height/2);
+    const xPos = cell.x * cell.width;
+    const yPos = cell.y * cell.height;
+    rect(xPos, yPos, cell.width, cell.height);
+
+    noStroke();
+    fill('lightgray'); // strangely, darker than dark gray.
+    rect(xPos, yPos, cell.width * BORDER, cell.height);
+    rect(xPos, yPos, cell.width, cell.height * BORDER);
+    fill('gray');
+    rect(xPos + (1 - BORDER) * cell.width, yPos, cell.width * BORDER, cell.height);
+    rect(xPos, yPos + (1 - BORDER) * cell.height, cell.width, cell.height * BORDER);
   });
+}
+
+// ===============================================================================================
+
+function drawFlag(cell) {
+
 }
 
 // ===============================================================================================
@@ -349,40 +327,33 @@ function drawNumBombs(cell) {
 
   fill('black');
   if (cell.bomb) {
-    // p = createP('b');
-    // p.style('color', 'green');
     text('b', posX, posY);
   }
   else {
     if (cell.numAdjBombs == 0) {
-      // p = createP(' ');
       text(' ', posX, posY);
     } else {
-      // p = createP(cell.numAdjBombs);
       text(cell.numAdjBombs, posX, posY);
     }
-    // p.style('color', 'black');
   }
-
-  // Yeah, weird and finicky way to get it centered:
-  // p.position(cell.x * cell.width + marginLeft + cell.width / 2 - 2, cell.y * cell.height + marginTop - cell.height / 2);
 }
 
 // ===============================================================================================
 
 function displayReality(cells, flags=[], questions=[]) {
-  console.log(ctx);
   cells.forEach(cell => {
     drawNumBombs(cell);
   });
-  // flags.forEach(flag => {
-  //   p = createP('f');
-  //   p.position(flag.x * flag.width + marginLeft + flag.width/2 - 2, flag.y * flag.height + marginTop - flag.height / 2);
-  // });
-  // questions.forEach(question => {
-  //   p = createP('?');
-  //   p.position(question.x * question.width + marginLeft + question.width/2 - 2, question.y * question.height + marginTop - question.height / 2);
-  // });
+  flags.forEach(flag => {
+    const posX = (flag.x - 2) * flag.width + marginLeft ;
+    const posY = (flag.y - 4) * flag.height + marginTop ;
+    text('f', posX, posY);
+  });
+  questions.forEach(question => {
+    const posX = (question.x - 2) * question.width + marginLeft ;
+    const posY = (question.y - 4) * question.height + marginTop ;
+    text('?', posX, posY);
+  });
 }
 
 // ===============================================================================================
