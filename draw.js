@@ -38,7 +38,7 @@ function setup() {
   drawGrid();
   prepareBombs(numBombs);
 
-  const flags = createP(`Flags left: ${flags_left}`);
+  const flags = createP(`Flags remaining: ${flags_left}`).addClass('flags');
   flags.position(100, marginTop - 50);
 
   const reset = createButton('reset');
@@ -170,15 +170,24 @@ function mouseReleased() {
         findAndRemoveCell(questions, clickedCell);
       }
     }
+    updateFlags();
+    updateFlagsText();
   }
   drawGrid();
   displayReality(opened_cells, flags, questions);
 }
 
 
-
 // ===============================================================================================
 // HELPERS:
+// ===============================================================================================
+
+function updateFlagsText() {
+  console.log(selectAll('.flags'));
+  flags_left = numBombs - flags.length;
+  selectAll('.flags')[0].html(`Flags remaining: ${flags_left}`);
+}
+
 // ===============================================================================================
 
 function findAndRemoveCell(arr, cell) {
@@ -320,8 +329,14 @@ function drawGrid() {
 
 // ===============================================================================================
 
-function drawFlag(cell) {
+function drawFlag(x, y) {
+  console.log(x, y);
+  fill('black');
+  rect(x-1, y-7, 2, 12);
 
+  noStroke();
+  fill('red');
+  triangle(x - 1, y - 8, x - 1, y, x + 6, y - 4);
 }
 
 // ===============================================================================================
@@ -354,14 +369,38 @@ function drawNumBombs(cell) {
 
 // ===============================================================================================
 
+function updateFlags() {
+  flags.forEach(flag => {
+    opened_cells.forEach(cell => {
+      if (flag.x == cell.x && flag.y == cell.y) {
+        findAndRemoveCell(flags, flag);
+      }
+    });
+  });
+  questions.forEach(question => {
+    opened_cells.forEach(cell => {
+      if (question.x == cell.x && question.y == cell.y) {
+        findAndRemoveCell(questions, question);
+      }
+    });
+  });
+}
+
+// ===============================================================================================
+
 function displayReality(cells, flags=[], questions=[]) {
   cells.forEach(cell => {
     drawNumBombs(cell);
   });
+
+  updateFlags();
+  updateFlagsText();
+
   flags.forEach(flag => {
     const posX = (flag.x - 2) * flag.width + marginLeft ;
     const posY = (flag.y - 4) * flag.height + marginTop ;
-    text('f', posX, posY);
+    // text('f', posX, posY);
+    drawFlag(posX, posY);
   });
   questions.forEach(question => {
     const posX = (question.x - 2) * question.width + marginLeft ;
