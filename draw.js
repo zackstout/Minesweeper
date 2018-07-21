@@ -1,6 +1,6 @@
 
 const marginLeft = 60;
-const marginTop = 60;
+const marginTop = 110;
 const numCells = 25; // Makes a 25x25 grid.
 const width = 600;
 const height = 600;
@@ -8,7 +8,9 @@ const numBombs = 80;
 
 let cells = [];
 let opened_cells = [];
-
+let flags_left = numBombs;
+let time = 0;
+let gameTimer;
 
 
 // ===============================================================================================
@@ -16,19 +18,39 @@ let opened_cells = [];
 // ===============================================================================================
 
 function setup() {
+  document.addEventListener('contextmenu', event => event.preventDefault());
+
+  let timer = createP(`Time: ${time}`);
+  timer.position(400, marginTop - 50);
+
+  gameTimer = setInterval(() => {
+    time++;
+    timer.remove();
+    timer = createP(`Time: ${time}`);
+    timer.position(400, marginTop - 50);
+  }, 1000);
+
   const canv = createCanvas(width, height);
   canv.position(marginLeft, marginTop);
+
   initializeGrid();
   drawGrid();
   prepareBombs(numBombs);
+
+  const flags = createP(`Flags left: ${flags_left}`);
+  flags.position(100, marginTop - 50);
+
+  const reset = createButton('reset');
+  reset.mouseClicked(function() {
+    console.log(this);
+  });
+  reset.position(250, marginTop - 50);
 
   // Initialize each cell's number:
   cells.forEach(cell => {
     cell.numAdjBombs = getNumBombs(cell);
   });
 
-  // Draw each cell's number:
-  // displayReality(cells);
 }
 
 // ===============================================================================================
@@ -36,7 +58,7 @@ function setup() {
 function initializeGrid() {
   for (let i=0; i < numCells; i++) {
     for (let j=0; j < numCells; j++) {
-      let cell = {
+      const cell = {
         x: i,
         y: j,
         col: 'gray',
@@ -97,18 +119,38 @@ function addBombs(arr) {
                                     // UI FUNCTIONS:
 // ===============================================================================================
 
-function mousePressed() {
-  const clickedCell = getCellFromPixels(mouseX, mouseY);
-  clickedCell.col = 'blue';
-  drawGrid();
-  // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
-}
+// function doubleClicked() {
+//
+// }
+
+
+// function draw() {
+//   if (mouseIsPressed) {
+//     const clickedCell = getCellFromPixels(mouseX, mouseY);
+//
+//     // if (mouseButton === LEFT) {
+//     //   console.log('left');
+//     //   clickedCell.col = 'blue';
+//     // } else {
+//     //
+//     // }
+//     // drawGrid();
+//   }
+// }
+
+
+// function mousePressed() {
+//
+//   // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
+// }
 
 // ===============================================================================================
 
 function mouseDragged() {
   const clickedCell = getCellFromPixels(mouseX, mouseY);
-  cells.forEach(cell => cell.col = 'gray');
+  cells.forEach(cell => {
+    if (cell.col === 'blue') cell.col = 'gray';
+  });
   clickedCell.col = 'blue';
   drawGrid();
 }
@@ -118,14 +160,30 @@ function mouseDragged() {
 function mouseReleased() {
   const clickedCell = getCellFromPixels(mouseX, mouseY);
 
-  if (clickedCell.bomb) {
-    console.log('you lose, sucker!');
+  if (mouseButton === LEFT) {
+    if (clickedCell.bomb) {
+      console.log('you lose, sucker!');
+      clearInterval(gameTimer);
+    } else {
+      console.log(clickedCell);
+      turnNeighborsRed(clickedCell);
+      displayReality(opened_cells);
+    }
   } else {
-    console.log(clickedCell);
-    turnNeighborsRed(clickedCell);
-    drawGrid();
-    displayReality(opened_cells);
+    console.log('right');
+
+    if (!clickedCell.flagged && !clickedCell.questioned) {
+      // will this make the next condition trigger? One would hope not.
+      clickedCell.flagged = true;
+    } else if (clickedCell.flagged) {
+      clickedCell.flagged = false;
+      clickedCell.questioned = true;
+    } else if (clickedCell.questioned) {
+      clickedCell.questioned = false;
+    }
+
   }
+  drawGrid();
 }
 
 
@@ -137,10 +195,16 @@ function mouseReleased() {
 function getCellFromPixels(x, y) {
   const i = Math.floor(x / cells[0].width);
   const j = Math.floor(y / cells[0].height);
-  // console.log(i, j);
   return getCellAt(i, j);
 }
 
+
+function containsCell(arr, cell) {
+  for (let i=0; i < arr.length; i++) {
+    if (arr[i].x == cell.x && arr[i].y == cell.y) return true;
+  }
+  return false;
+}
 // ===============================================================================================
 
 // Yes, the recursion works!
@@ -153,7 +217,9 @@ function turnNeighborsRed(el) {
       neighbors.forEach(neighbor => {
         if (!neighbor.bomb && el.numAdjBombs == 0) {
           neighbor.col = 'pink';
-          opened_cells.push(neighbor);
+          if (!containsCell(opened_cells, neighbor)) {
+            opened_cells.push(neighbor);
+          }
         }
 
         if (neighbor.numAdjBombs == 0) {
@@ -225,6 +291,22 @@ function drawGrid() {
   cells.forEach(cell => {
     fill(cell.col);
     rect(cell.x * cell.width, cell.y * cell.height, cell.width, cell.height);
+
+    // Adding this makes it intolerably slow. So the problem must be that drawGrid is being called too much:
+    // let p;
+    // if (cell.flagged) {
+    //   p = createP('f');
+    // }
+    // else if (cell.questioned) {
+    //   p = createP('?');
+    // }
+    // else {
+    //   // p.remove();
+    //   p = createP(' ');
+    // }
+    // // } p = createP('');
+    //
+    // p.position(cell.x * cell.width + marginLeft + cell.width/2 - 2, cell.y * cell.height + marginTop - cell.height/2);
   });
 }
 
@@ -234,17 +316,17 @@ function drawNumBombs(cell) {
   let p;
   if (cell.bomb) {
     p = createP('b');
+    p.style('color', 'green');
   }
   else {
-    if (cell.numAdjBombs == 0) p = createP(' ');
-    else p = createP(cell.numAdjBombs);
-  }
-
-  if (cell.bomb) {
-    p.style('color', 'green');
-  } else {
+    if (cell.numAdjBombs == 0) {
+      p = createP(' ');
+    } else {
+      p = createP(cell.numAdjBombs);
+    }
     p.style('color', 'black');
   }
+
   // Yeah, weird and finicky way to get it centered:
   p.position(cell.x * cell.width + marginLeft + cell.width / 2 - 2, cell.y * cell.height + marginTop - cell.height / 2);
 }
@@ -256,3 +338,5 @@ function displayReality(cells) {
     drawNumBombs(cell);
   });
 }
+
+// ===============================================================================================
