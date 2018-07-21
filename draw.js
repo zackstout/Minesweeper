@@ -11,7 +11,8 @@ let opened_cells = [];
 let flags_left = numBombs;
 let time = 0;
 let gameTimer;
-
+let flags = [];
+let questions = [];
 
 // ===============================================================================================
                                      // STARTERS:
@@ -62,6 +63,7 @@ function initializeGrid() {
         x: i,
         y: j,
         col: 'gray',
+        hovered: false,
         height: height / numCells,
         width: width / numCells,
         bomb: false,
@@ -139,19 +141,25 @@ function addBombs(arr) {
 // }
 
 
-// function mousePressed() {
-//
-//   // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
-// }
+function mousePressed() {
+  const clickedCell = getCellFromPixels(mouseX, mouseY);
+  cells.forEach(cell => {
+    cell.hovered = false;
+  });
+  clickedCell.hovered = true;
+  drawGrid();
+
+  // Make sure when clicked, we add the shadow bottom class, to emulate a real button.
+}
 
 // ===============================================================================================
 
 function mouseDragged() {
   const clickedCell = getCellFromPixels(mouseX, mouseY);
   cells.forEach(cell => {
-    if (cell.col === 'blue') cell.col = 'gray';
+    cell.hovered = false;
   });
-  clickedCell.col = 'blue';
+  clickedCell.hovered = true;
   drawGrid();
 }
 
@@ -159,6 +167,8 @@ function mouseDragged() {
 
 function mouseReleased() {
   const clickedCell = getCellFromPixels(mouseX, mouseY);
+  clickedCell.hovered = false;
+  //clickedCell.clicked = true; // does this matter? No -- it happens in the recursive call
 
   if (mouseButton === LEFT) {
     if (clickedCell.bomb) {
@@ -167,22 +177,27 @@ function mouseReleased() {
     } else {
       console.log(clickedCell);
       turnNeighborsRed(clickedCell);
-      displayReality(opened_cells);
+      // displayReality(opened_cells);
     }
   } else {
     console.log('right');
 
-    if (!clickedCell.flagged && !clickedCell.questioned) {
+    if (!containsCell(flags, clickedCell) && !containsCell(questions, clickedCell)) {
       // will this make the next condition trigger? One would hope not.
-      clickedCell.flagged = true;
-    } else if (clickedCell.flagged) {
-      clickedCell.flagged = false;
-      clickedCell.questioned = true;
-    } else if (clickedCell.questioned) {
-      clickedCell.questioned = false;
+      // clickedCell.flagged = true;
+      flags.push(clickedCell);
+    } else if (containsCell(flags, clickedCell)) {
+      // clickedCell.flagged = false;
+      // clickedCell.questioned = true;
+      findAndRemoveCell(flags, clickedCell);
+      questions.push(clickedCell);
+    } else if (containsCell(questions, clickedCell)) {
+      // clickedCell.questioned = false;
+      findAndRemoveCell(questions, clickedCell);
     }
 
   }
+  displayReality(opened_cells, flags, questions);
   drawGrid();
 }
 
@@ -192,12 +207,21 @@ function mouseReleased() {
                                         // HELPERS:
 // ===============================================================================================
 
+function findAndRemoveCell(arr, cell) {
+  for (let i=0; i < arr.length; i++) {
+    if (arr[i].x == cell.x && arr[i].y == cell.y) arr.splice(i, 1);
+  }
+}
+
+// ===============================================================================================
+
 function getCellFromPixels(x, y) {
   const i = Math.floor(x / cells[0].width);
   const j = Math.floor(y / cells[0].height);
   return getCellAt(i, j);
 }
 
+// ===============================================================================================
 
 function containsCell(arr, cell) {
   for (let i=0; i < arr.length; i++) {
@@ -205,6 +229,7 @@ function containsCell(arr, cell) {
   }
   return false;
 }
+
 // ===============================================================================================
 
 // Yes, the recursion works!
@@ -290,6 +315,7 @@ function getNumBombs(cell) {
 function drawGrid() {
   cells.forEach(cell => {
     fill(cell.col);
+    if (cell.hovered) fill('blue');
     rect(cell.x * cell.width, cell.y * cell.height, cell.width, cell.height);
 
     // Adding this makes it intolerably slow. So the problem must be that drawGrid is being called too much:
@@ -333,10 +359,18 @@ function drawNumBombs(cell) {
 
 // ===============================================================================================
 
-function displayReality(cells) {
+function displayReality(cells, flags=[], questions=[]) {
   cells.forEach(cell => {
-    drawNumBombs(cell);
+    // drawNumBombs(cell);
   });
+  // flags.forEach(flag => {
+  //   p = createP('f');
+  //   p.position(flag.x * flag.width + marginLeft + flag.width/2 - 2, flag.y * flag.height + marginTop - flag.height / 2);
+  // });
+  // questions.forEach(question => {
+  //   p = createP('?');
+  //   p.position(question.x * question.width + marginLeft + question.width/2 - 2, question.y * question.height + marginTop - question.height / 2);
+  // });
 }
 
 // ===============================================================================================
